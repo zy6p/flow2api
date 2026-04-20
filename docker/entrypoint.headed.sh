@@ -39,4 +39,8 @@ PY
   fi
 fi
 
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 exec python main.py

@@ -262,6 +262,31 @@ def normalize_browser_proxy_url(proxy_url: str) -> tuple[Optional[str], Optional
 
     return proxy_url, None
 
+
+def _get_env_browser_proxy_url() -> Optional[str]:
+    """Read a browser proxy from environment for standalone remote-browser mode."""
+    for key in ("REMOTE_BROWSER_PROXY_URL", "BROWSER_PROXY_URL", "BROWSER_PROXY_SERVER"):
+        value = (os.environ.get(key, "") or "").strip()
+        if value:
+            return value
+    return None
+
+
+def _get_env_browser_count(default: int = 1) -> int:
+    """Read configured browser slot count from environment for standalone mode."""
+    for key in ("REMOTE_BROWSER_COUNT", "BROWSER_CAPTCHA_COUNT", "BROWSER_COUNT"):
+        raw = (os.environ.get(key, "") or "").strip()
+        if not raw:
+            continue
+        try:
+            return max(1, int(raw))
+        except Exception:
+            debug_logger.log_warning(
+                f"[BrowserCaptcha] invalid env {key}={raw!r}, fallback to {default}"
+            )
+            break
+    return max(1, int(default or 1))
+
 def validate_browser_proxy_url(proxy_url: str) -> tuple[bool, str]:
     if not proxy_url: return True, None
     normalized_proxy_url, _ = normalize_browser_proxy_url(proxy_url.strip())
@@ -575,6 +600,10 @@ class TokenBrowser:
                 if captcha_config.browser_proxy_enabled and captcha_config.browser_proxy_url:
                     candidate_proxy_url = captcha_config.browser_proxy_url.strip()
                     proxy_source = "global"
+            else:
+                candidate_proxy_url = _get_env_browser_proxy_url()
+                if candidate_proxy_url:
+                    proxy_source = "env"
 
             if candidate_proxy_url:
                 normalized_proxy_url, proxy_warning = normalize_browser_proxy_url(candidate_proxy_url)
@@ -1713,6 +1742,9 @@ class BrowserCaptchaService:
             except Exception as e:
                 debug_logger.log_warning(f"[BrowserCaptcha] 加载 browser_count 配置失败: {e}，使用默认值 1")
                 self._browser_count = 1
+        else:
+            self._browser_count = _get_env_browser_count(default=1)
+            debug_logger.log_info(f"[BrowserCaptcha] 浏览器数量配置(环境变量): {self._browser_count}")
         # 并发限制 = 浏览器数量，不再硬编码限制
         self._token_semaphore = asyncio.Semaphore(self._browser_count)
         debug_logger.log_info(f"[BrowserCaptcha] 并发上限: {self._browser_count}")
@@ -2118,4 +2150,3 @@ class BrowserCaptchaService:
             "browsers": []
         }
         return base_stats
-
