@@ -182,7 +182,7 @@
                         <div>
                             <label class="text-sm font-medium mb-2 block">当前 API Key</label>
                             <input id="cfgCurrentAPIKey" type="text" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" readonly disabled>
-                            <p class="text-xs text-muted-foreground mt-1">当前使用的 API Key（只读）</p>
+                            <p class="text-xs text-muted-foreground mt-1">当前使用的 API Key（只读）。新版 Token Updater 插件建议直接填写这个长期有效的 Key，而不是短期 admin 登录态。</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium mb-2 block">新 API Key</label>
@@ -338,7 +338,7 @@
                         </div>
                         <div class="rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800">
                             <p class="text-xs text-blue-800 dark:text-blue-200">
-                                ℹ️ <strong>使用说明：</strong>安装Chrome扩展后，将连接接口和Token配置到插件中，插件会自动提取Google Labs的cookie并更新到系统
+                                ℹ️ <strong>使用说明：</strong>新版插件优先填写“系统配置”里的 API Key 作为长期访问令牌，连接接口和连接 Token 由服务端自动管理。只有旧版兼容场景才需要使用短期 admin 登录态。
                             </p>
                         </div>
                     </div>

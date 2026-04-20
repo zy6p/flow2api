@@ -573,6 +573,27 @@ async def verify_admin_token(authorization: str = Header(None)):
     return token
 
 
+async def verify_plugin_access_token(authorization: str = Header(None)):
+    """Verify plugin control credential.
+
+    Accepts either:
+    - admin session token (`admin-...`) for backward compatibility
+    - long-lived Flow2API API key for stable plugin automation
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization")
+
+    token = authorization[7:]
+
+    if token in active_admin_tokens:
+        return {"token": token, "kind": "admin_session"}
+
+    if AuthManager.verify_api_key(token):
+        return {"token": token, "kind": "api_key"}
+
+    raise HTTPException(status_code=401, detail="Invalid plugin access token")
+
+
 # ========== Auth Endpoints ==========
 
 @router.post("/api/admin/login")
@@ -869,7 +890,7 @@ async def refresh_at(
 @router.post("/api/tokens/st2at")
 async def st_to_at(
     request: ST2ATRequest,
-    token: str = Depends(verify_admin_token)
+    token_info: Dict[str, str] = Depends(verify_plugin_access_token)
 ):
     """Convert Session Token to Access Token (仅转换,不添加到数据库)"""
     try:
@@ -1931,8 +1952,8 @@ async def test_captcha_score(
 # ========== Plugin Configuration Endpoints ==========
 
 @router.get("/api/plugin/config")
-async def get_plugin_config(request: Request, token: str = Depends(verify_admin_token)):
-    """Get plugin configuration"""
+async def get_plugin_config(request: Request, token_info: Dict[str, str] = Depends(verify_plugin_access_token)):
+    """Get plugin configuration using API key or admin session token."""
     plugin_config = await db.get_plugin_config()
 
     # Get the actual domain and port from the request
@@ -1967,9 +1988,9 @@ async def get_plugin_config(request: Request, token: str = Depends(verify_admin_
 @router.post("/api/plugin/config")
 async def update_plugin_config(
     request: dict,
-    token: str = Depends(verify_admin_token)
+    token_info: Dict[str, str] = Depends(verify_plugin_access_token)
 ):
-    """Update plugin configuration"""
+    """Update plugin configuration using API key or admin session token."""
     connection_token = request.get("connection_token", "")
     auto_enable_on_update = request.get("auto_enable_on_update", True)  # 默认开启
 
