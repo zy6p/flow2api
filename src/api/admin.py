@@ -370,10 +370,11 @@ async def _solve_recaptcha_with_api_service(
     get_url = f"{base_url.rstrip('/')}/getTaskResult"
 
     async with AsyncSession() as session:
+        # These are JSON API endpoints, not browser-facing pages. `impersonate`
+        # breaks request bodies against some plain HTTP self-hosted providers.
         create_resp = await session.post(
             create_url,
             json={"clientKey": client_key, "task": task},
-            impersonate="chrome120",
             timeout=30
         )
         create_json = create_resp.json()
@@ -387,7 +388,6 @@ async def _solve_recaptcha_with_api_service(
             poll_resp = await session.post(
                 get_url,
                 json={"clientKey": client_key, "taskId": task_id},
-                impersonate="chrome120",
                 timeout=30
             )
             poll_json = poll_resp.json()

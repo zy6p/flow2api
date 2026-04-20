@@ -2409,7 +2409,9 @@ class FlowClient:
                     }
                 }
 
-                result = await session.post(create_url, json=create_data, impersonate="chrome110")
+                # Provider APIs expect a normal JSON body; browser impersonation
+                # is only useful for page traffic and can drop bodies on HTTP.
+                result = await session.post(create_url, json=create_data)
                 result_json = result.json()
                 task_id = result_json.get('taskId')
 
@@ -2426,7 +2428,7 @@ class FlowClient:
                         "clientKey": client_key,
                         "taskId": task_id
                     }
-                    result = await session.post(get_url, json=get_data, impersonate="chrome110")
+                    result = await session.post(get_url, json=get_data)
                     result_json = result.json()
 
                     debug_logger.log_info(f"[reCAPTCHA {method}] polling #{i+1}: {result_json}")
