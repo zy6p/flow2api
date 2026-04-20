@@ -14,6 +14,15 @@ echo "[entrypoint] starting Fluxbox"
 fluxbox >/tmp/fluxbox.log 2>&1 &
 
 if [ -z "${BROWSER_EXECUTABLE_PATH:-}" ]; then
+  for browser_path in /usr/bin/chromium /usr/bin/google-chrome /usr/bin/chromium-browser /usr/bin/google-chrome-stable; do
+    if [ -x "$browser_path" ]; then
+      export BROWSER_EXECUTABLE_PATH="$browser_path"
+      break
+    fi
+  done
+fi
+
+if [ -z "${BROWSER_EXECUTABLE_PATH:-}" ]; then
   BROWSER_EXECUTABLE_PATH="$(python - <<'PY'
 from playwright.sync_api import sync_playwright
 
